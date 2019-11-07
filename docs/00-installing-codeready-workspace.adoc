@@ -1,0 +1,27 @@
+= Integration with Azure DevOps
+
+== Installing OpenShift Extension
+
+First, locate go to the Azure DevOps Marketplace
+
+image::../images/DevOps-Marketplace.png[]
+
+Search for "OpenShift" and select the "OpenShift Extension"
+
+image::../images/OpenShift Extension.png[]
+
+== Setting up OpenShift Service Connection
+
+Navigate to the Service Connections in the Project Settings
+
+image::../images/service-connection.png[]
+
+The OpenShift service connector should show up in the list.  Select it
+
+image::../images/openshift-service-connector.png[]
+
+
+
+For more information on how to configure the OpenShift service connection, see link:https://github.com/redhat-developer/openshift-vsts/blob/master/docs/getting-started.md[here].
+
+NOTE: You can also use the Kubernetes Service Connection, but this requires setting up an appropriate service account and connecting the proper secret
