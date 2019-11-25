@@ -1,42 +1,26 @@
-= Code Ready Workspace Demo Script
+= Installing and Using CodeReady Workspaces on ARO 3.11
 
 .Demo Resources
 ****
 This was originally based on the CICD demo in ARO referenced link:http://aroworkshop.io/[here].
+
+The main thing you're going to want to run to setup things is:
+----
+./cicd/scripts/provision.sh deploy --project-suffix crw
+----
 ****
 
-== Setting the Scene (for slides?)
+== Setting the Scene
 
-For the conceit of this demo, Tasks is an application that you would like to have managed by remote teams or temporary staff, thus making RedHat's CodeReady Workspaces an appealing option.
+This demo builds upon an existing Azure RedHat Openshift demo which can be found at link:http://aroworkshop.io/[http://aroworkshop.io/].
 
-Marc manages a team of temporary (or remote) developers, and Bryon is one of those remote developers.  Tasks is an application that Grocery.com runs on their OpenShift platform (see <<Technical Context>>)
+For the conceit of this demo, we will pretend that the "Tasks" application from the Azure RedHat Openshift demo is an application that BigBusiness.com.  
 
-Tasks is an application that is under revision control, but access to this code must be limited in a private repository.  Moreover, temporary workers have slightly conflicting priorities
+INFO: The application is actually a JBoss EAP app (more info can be found link:https://github.com/OpenShiftDemos/openshift-tasks["here"]) that highlights aspects of OpenShift's functionality.  
 
-* They must get up to speed quickly and be productive
-* They must not be able to access the source code directory or clone it to their laptops
+Red Hat has setup the following infrastructure for BigBusiness.com on (dedicated) Azure Red Hat Openshift (ARO) infrastructure:
 
-In this demo, you will see
-
-* Marc setup a CodeReady Workspace for Bryon to use
-* Marc invite Bryon to the workspace
-* Watch Bryon change code in the new workspace whilst Marc watches
-* See a commit to the internal git repository trigger a model continuous integration pipeline
-* Test deployed changes in Dev and notice a bug
-* Use CodeReady workspaces to find the bug
-* Post Mortem: Look at the results of the static analysis in the CI/CD that might have found the bug
-* Promote to staging
-
-== Technical Context
-
-First we want to give some context to the toy application and environment that we've set up.
-
-All of this is to support an JBoss EAP app called link:https://github.com/OpenShiftDemos/openshift-tasks["Tasks"] that highlights aspects of OpenShift's functionality.  
-
-
-NOTE: The demo was built using Azure Red Hat OpenShift 3.11.  This is a managed offering of OpenShift that can be purchased from Microsoft.  There is nothing particularly special about this cluster.
-
-=== Projects and Environments
+image::../images/aro-pipeline.png[]
 
 In this demo, we have 3 different projects:
 
@@ -49,13 +33,31 @@ In this demo, we have 3 different projects:
 ** SonarQube, a static analysis platform
 ** Gogs, a self-hosted GitHub service (with attendant database)
 
-image::../images/aro-pipeline.png[]
+== The Value Proposition
 
-Navigate to the Tasks application and play around briefly.
+BigBusiness would like to have its Tasks application developed by remote teams and temporary staff.  Tasks is a proprietary app and as such the source code needs to be protected.  Thus, BigBusiness.com has the following drivers for their remote teams and temporary staff:
+
+* They must get up to speed quickly and be productive and not spend ages setting up their environments
+* They must *not* be able to access the source code directory or clone it to their laptops
+
+This makes CodeReady Workspaces a very appealing option for BigBusiness.com
+
+== What you will see
+
+In this demo, you will see
+
+* How to install RedHat's official CodeReady Workspace distribution on an ARO cluster _without cluster-admin rights_
+* How one user can setup a CodeReady Workspace and invite others for use
+* See how a second dev and edit code and the first dev can see it
+* See a commit to the internal git repository trigger a model continuous integration pipeline
+* Test deployed changes in Dev and notice a bug
+* Use CodeReady workspaces to find the bug
+* Post Mortem: Look at the results of the static analysis in the CI/CD that might have found the bug
+* Promote to staging
 
 == Installing CodeReady Workspace
 
-1. Download the CodeReady Workspace installer from link:access.redhat.com[]
+1. Download the CodeReady Workspace installer from link:https://access.redhat.com/documentation/en-us/red_hat_codeready_workspaces/1.1/html/administration_guide/installing_codeready-workspaces[access.redhat.com]
 2. _Optional:_ Change storage to be per-workspace
 3. Run the deploy script to install CRW in demo-workspaces
 ----

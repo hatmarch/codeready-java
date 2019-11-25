@@ -1,0 +1,3 @@
+= Code Ready Workspace Install
+
+This is a snapshot of the installer as downloaded from link:http://access.redhat.com/[access.redhat.com] back in early November.  You might consider logging in and downloading the latest as per the link:../docs/demo-script.adoc[demo script].
