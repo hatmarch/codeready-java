@@ -329,8 +329,6 @@ objects:
             oc set probe dc/tasks --readiness --get-url=http://:8080/ws/demo/healthcheck --initial-delay-seconds=30 --failure-threshold=10 --period-seconds=9 -n ${DEV_PROJECT}
             oc set probe dc/tasks --liveness  --get-url=http://:8080/ws/demo/healthcheck --initial-delay-seconds=180 --failure-threshold=10 --period-seconds=9 -n ${DEV_PROJECT}
             oc rollout cancel dc/tasks -n ${STAGE_PROJECT}
-            # enable java debugging
-            oc set env dc/tasks -n ${DEV_PROJECT} -e"JAVA_OPTS=-Xdebug -Xrunjdwp:transport=dt_socket,address=5000,server=y,suspend=n"
 
             # stage project
             oc expose dc/tasks --port=8080 -n ${STAGE_PROJECT}
