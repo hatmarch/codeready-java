@@ -6,7 +6,10 @@ This was originally based on the CICD demo in ARO referenced link:http://arowork
 
 The main thing you're going to want to run to setup things is:
 ----
-./cicd/scripts/provision.sh deploy --project-suffix crw
+git clone -b ocp-3.11 https://github.com/hatmarch/codeready-java.git
+cd codeready-java
+export DEMO_HOME=$(pwd)
+$DEMO_HOME/scripts/provision.sh deploy --project-suffix crw
 ----
 ****
 
