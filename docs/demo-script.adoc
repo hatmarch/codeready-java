@@ -4,13 +4,7 @@
 ****
 This was originally based on the CICD demo in ARO referenced link:http://aroworkshop.io/[here].
 
-The main thing you're going to want to run to setup things is:
-----
-git clone -b ocp-3.11 https://github.com/hatmarch/codeready-java.git
-cd codeready-java
-export DEMO_HOME=$(pwd)
-$DEMO_HOME/scripts/provision.sh deploy --project-suffix crw
-----
+It is assumed that you have first provisioned a 3.11 cluster in Azure that you have admin (not cluster-admin) rights to.  This demo should be deployable to managed environments.
 ****
 
 == Setting the Scene
@@ -60,32 +54,58 @@ In this demo, you will see
 
 == Installing CodeReady Workspace
 
-1. Download the CodeReady Workspace installer from link:https://access.redhat.com/documentation/en-us/red_hat_codeready_workspaces/1.1/html/administration_guide/installing_codeready-workspaces[access.redhat.com]
+WARNING: You can only install a very specific version of the CodeReady Workspace on OpenShift Dedicated (or ARO).  We link to that below.
+
+1. Download the 1.0.2.GA CodeReady operator installer from link:https://access.redhat.com/documentation/en-us/red_hat_codeready_workspaces/1.2/html/administration_guide/installing-codeready-workspaces-on-openshift-dedicated[access.redhat.com]
+** If you go directly to access.redhat.com, you will need to search for "Installing CodeReady Workspaces on OpenShift Dedicated"
+** Follow the links to download
 2. _Optional:_ Change storage to be per-workspace
-3. Run the deploy script to install CRW in demo-workspaces
+3. Go to the download directory with a shell that is logged into your cluster
 ----
-./deploy.sh —deploy -p=demo-workspaces \
+./deploy.sh --deploy -p=demo-workspaces \
     --operator-image=registry.redhat.io/codeready-workspaces/server-operator:1.0 \
     --server-image=registry.redhat.io/codeready-workspaces/server-rhel8:1.2
 ----
 NOTE: This installs an *Operator* which in turn installs all the required components for CRW.  It will take a few minutes to setup.  At this point, you could switch to a CRW you prepared earlier
 
-4. Open the overview for the demo-workspaces project.  Click on the exposed route for the CRW
-5. You will be prompted to log in.  Enter Marc's login details
-NOTE: This is part of the keycloak implementation that allows accounts to restrict access to the CRW
-6. Bryon will also register with email address brbaker@redhat.com in a separate browser
+1. Whilst you're waiting for the workspace to be installed, open a shell and enter the following to deploy the "Tasks" demo app and it's attendant cicd, dev, and staging environment projects.
+----
+git clone -b ocp-3.11 https://github.com/hatmarch/codeready-java.git
+cd codeready-java
+export DEMO_HOME=$(pwd)
+$DEMO_HOME/scripts/provision.sh deploy --project-suffix crw --ephemeral
+----
+
+4. Check to see if the workspace is done with the following command
+----
+oc get pods -n demo-workspace -w
+----
+
+5. Once all the pods are running you can find the link to the workspaces project under the network routes
+Open the overview for the demo-workspaces project.  Click on the exposed route for the CRW
+5. You will be prompted to log in.  Instead, hit the registration button.
+6. Create a new JBoss workspace and wait for that to complete
 
 == Setup a workspace for Tasks
 
-1. Create a new JBoss workspace
-2. In a separate tab, open the route to the gogs workspace
+1. Once the workspace is loaded, we're going to need to import a project, from our self-hosted git repo
+2. Get the route to the gogs repo
+----
+$ oc get route -n cicd-crw gogs
+----
+2. In a separate tab, open that route to go to the gogs workspace
 * Point out the service route of the gogs workspace
 * replace the clone http route with the service name of the route
-----
-http://gogs.cicd.svc.cluster.local:3000/gogs/openshift-tasks.git
-----
+3. Log into Gogs
+* user: gogs
+* pass: gogs
+4. You could use the public route for gogs, but for the sake of the security of the repo, you can show how the CodeReady workspace has access to the repo in the cluster (following steps)
+
 3. Open the new workspace
-4. Click on Import Project
+4. Click on Import Project and fill it in with the result of this command
+----
+$ echo "http://$(oc get svc gogs -o template --template='{{.spec.clusterIP}}'):3000/gogs/openshift-tasks.git"
+----
 
 image::../images/import-project.png[]
 
@@ -93,69 +113,106 @@ image::../images/import-project.png[]
 
 image::../images/project-configuration.png[]
 
-6. Go to Configure workspace
+== Share workspace
+
+1. Open an incognito window or another browser, and move this window to a place where it can be seen with other CRW window.
+** this window will be referred to as the window *CRW-2*
+
+2. *CRW-2*: Go to the CodeReady Workspace route as gotten by this command and be sure to select the *eap-7* branch:
+----
+echo "$(oc get route codeready -n demo-workspaces)"
+----
+
+2. *CRW-2*: At the login page click "Register" to create a new user 
+
+image::../images/crw-register.png[]
+
+3. *CRW-2*: Enter new user details, paying special attention to the user name or email and click "Register" button
+
+image::../images/crw-user-registration.png[]
+
+3. *CRW-2*:Click the "Workspaces" link on the left.  You will be sent to an empty workspace page.  Wait there 
+
+image::../images/workspaces.png[]
+
+6. *CRW*: Follow the image to go to the Workspace view and then select the gear to configure
 
 image::../images/configure-workspace.png[]
 
-7. Go to the workspaces view and share with brbaker@redhat.com
+3. *CRW*: Click on Share tab, then Add Developer, and then enter the email of the user created in previous step and press enter key.  Then click "Share"
+** if the address entered matches a registered user, the email will be put in a box
 
 image::../images/share-workspace.png[]
 
+5. *CRW-2*: Back in the incognito window, the shared workspace should appear in the dashboard.  Open that workspace
+** NOTE: You may need to hit refresh to make the workspace appear
+
+5. *CRW-2*: When the workspace opens, navigate to the *DemoResource.java* file so that changes can be watched.
+
 == Edit the code
 
-1. Open *index.jsp*.  Open the file by navigating to it (from assistant menu)
+1. *CRW-1*: Open *index.jsp*.  Open the file by navigating to it (from assistant menu)
 
 image::../images/navigate-to.png[]
 
 2. Find and Replace "OpenShift Tasks" with "Azure Red Hat Openshift Tasks"
-3. Navigate to: *DemoResource.java*
-4. _Watch_ Bryon make the following changes to the *toggleHealth* method:
+3. Navigate to: *DemoResource.java* and search (CMD-F) for the "toggleHealth" method and wait there
+
+4. *CRW-2*: Whilst the original CRW workspace can still be seen, make the following changes to the *toggleHealth* method:
 
 ====
 image::../images/toggle-health-delta.png[]
 ====
 
+5. Notice that changes being made in CRW-2 are showing up in CRW-1
+
 == Compile the code
 
-1. Build the project by using the maven build command (from UI)
+1. *CRW-2*: Build the project by using the maven build command (from UI)
 
 image::../images/build-success.png[]
 
-====
-TODO: Fill this in!
-====
-
 == Commit the code
 
-1. Open Git window by going to Git > Commit
-
-image::../images/git-commit.png[]
-
-2. Make sure the changes are selected, enter a commit message, and click commit (_note: don't push to origin yet_)
-
-3. Shrink the existing tab and in a new window (Window #2), go to the *CI/CD* project in OpenShift.
-* Select the Build > Pipelines option on the right in Window #2
+3. *CRW-1*: Switch to the OpenShift console tab and go to the *CI/CD* project in OpenShift.
+** Select the Build > Pipelines option on the right in Window #2
 ====
 image::../images/pipelines-view.png[]
 ====
 
-4. In Window #1, open the terminal, navigate to the project directory, and push to origin
+1. *CRW-2*: Open Git window by going to Git > Commit
+
+image::../images/git-commit.png[]
+
+2. *CRW-2*: Make sure the changes are selected, enter a commit message, and click commit (being sure the push committed changes to: is _not_ checked)
+
+4. *CRW-2*: In this window open the terminal, navigate to the project directory, and push to origin.  Enter username and password as
+** user: gogs
+** pass: gogs
 ----
-$ cd 
+$ cd openshift-tasks
 $ git push origin
+
 Enumerating objects: 17, done.
 Counting objects: 100% (17/17), done.
 Delta compression using up to 4 threads.
 Compressing objects: 100% (7/7), done.
 Writing objects: 100% (9/9), 754 bytes | 754.00 KiB/s, done.
 Total 9 (delta 2), reused 0 (delta 0)
-Username for 'http://gogs.cicd.svc.cluster.local:3000': gogs
-Password for 'http://gogs@gogs.cicd.svc.cluster.local:3000':
-To http://gogs.cicd.svc.cluster.local:3000/gogs/openshift-tasks.git
+Username for 'http://gogs.cicd-crw.svc.cluster.local:3000': gogs
+Password for 'http://gogs@gogs.cicd-crw.svc.cluster.local:3000':
+To http://gogs.cicd-crw.svc.cluster.local:3000/gogs/openshift-tasks.git
    3c27c77..0150cfc  eap-7 -> eap-7
 ----
 
-5. Navigate to the Tasks - Dev route.  Play with the app
+5. Watch the build and wait for the dev stage to finish
+
+5. Get the Tasks - Dev route.
+----
+oc get route tasks -n dev-crw --no-headers | awk '{ print $2 }' 
+----
+
+5. *CRW-2*: In incognito window, Navigate to the Tasks - Dev route found in the previous step.  Play with the app
 * Notice the issue where you don't get a message when toggling back to healthy
 
 image::../images/tasks-dev-broken.png[]
@@ -164,10 +221,16 @@ image::../images/tasks-dev-broken.png[]
 
 There is clearly an issue that we're not getting a message whenver we toggle health.  We need to debug this issue.
 
-WARNING: You need to ensure the DeploymentConfig for the Tasks pod has JAVA_OPTS that include the debugger flags
+WARNING: You need to ensure the DeploymentConfig for the Tasks pod has JAVA_OPTS that include the debugger flags.  This should have been setup in the deployment
 
-1. Navigate to *DemoResource.java* and set a breakpoint on line 71 by clicking on the number
-2. Window #2> In a new tab of this window, look up the IP address of one of the running containers
+1. *CRW-1*: Navigate to *DemoResource.java* and set a breakpoint on line 71 by clicking on the number
+
+2. Find the IP address of the dev pod by using this command:
+----
+oc get pod $(oc get pods -n dev-crw | grep -i running | awk '{ print $1}') -nmplate --template='{{.status.podIP}}'
+----
+
+2. In the console tab of this window, look up the IP address of one of the running containers
 * Open the "Tasks - Dev" project
 * Go to Application > Pods
 * Select the running tasks pod and look at the details.  Find the IP address of the pod
@@ -182,12 +245,16 @@ image::../images/remote-debug-configuration.png[]
 5. Click Save, then click Debug
 * Notice the Debug "perspective" in the workspace window
 
-6. In Window #2, click on Toggle Health
-* You should show up in the debugger in Window #1
+6. *CRW-2*: In window with app running, click on Toggle Health
+* You should show up in the debugger in Window #1 (*CRW-1*)
 
-7. Demonstrate stepping functionality, watch window, and stack trace.
-8. Fix the code and recommit and deploy from the command line
+7. *CRW-1*: Demonstrate stepping functionality, watch window, and stack trace.
+
+8. Close debugging, navigate to Pipelines for dev-crw project again.
+
+8. *CRW-2*: Fix the code and recommit and deploy from the command line
 ----
+$ cd openshift-tasks/
 $ git add .
 $ git commit -m "Fix toggleHealth"
 $ git push origin
@@ -200,6 +267,11 @@ $ git push origin
 * NOTE: If you miss it, just click the *Start Pipeline* button in the corner
 
 image::../images/promote-to-stage.png[]
+
+3. *CRW-2*: Show the _staging_ build running properly using the url of this command
+----
+oc get route tasks -n stage-crw --no-headers | awk '{ print $2 }' 
+----
 
 
 == Post Mortem
