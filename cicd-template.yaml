@@ -303,6 +303,7 @@ objects:
               oc secrets link default quay-cicd-secret --for=pull -n ${DEV_PROJECT}
               # enable java debugging
               oc set env dc tasks -n ${DEV_PROJECT} -eJAVA_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,address=5000,server=y,suspend=n"
+
               
               # stage
               oc create secret docker-registry quay-cicd-secret --docker-server=quay.io --docker-username="${QUAY_USERNAME}" --docker-password="${QUAY_PASSWORD}" --docker-email=cicd@redhat.com -n ${STAGE_PROJECT}
@@ -341,16 +342,19 @@ objects:
             GOGS_HOSTNAME="gogs-$CICD_NAMESPACE.$HOSTNAME"
 
             if [ "${EPHEMERAL}" == "true" ] ; then
-            curl -s https://raw.githubusercontent.com/OpenShiftDemos/gogs-openshift-docker/master/openshift/gogs-template.yaml|sed 's#sql\:9.5#sql\:9.6#g'| oc new-app -f - \
+            curl -s https://raw.githubusercontent.com/OpenShiftDemos/gogs-openshift-docker/master/openshift/gogs-template.yaml| oc process -f - \
                   --param=GOGS_VERSION=0.11.34 \
                   --param=HOSTNAME=$GOGS_HOSTNAME \
-                  --param=SKIP_TLS_VERIFY=true
-            else
-            curl -s https://raw.githubusercontent.com/OpenShiftDemos/gogs-openshift-docker/master/openshift/gogs-persistent-template.yaml |sed 's#sql\:9.5#sql\:9.6#g'| oc new-app -f - \
-                  --param=GOGS_VERSION=0.11.34 \
-                  --param=HOSTNAME=$GOGS_HOSTNAME \
+                  --param=DATABASE_VERSION=10 \
                   --param=SKIP_TLS_VERIFY=true \
-                  --param=DATABASE_VERSION=latest
+            | oc apply -f -
+            else
+            curl -s https://raw.githubusercontent.com/OpenShiftDemos/gogs-openshift-docker/master/openshift/gogs-persistent-template.yaml | oc process -f - \
+                  --param=GOGS_VERSION=0.11.34 \
+                  --param=HOSTNAME=$GOGS_HOSTNAME \
+                  --param=DATABASE_VERSION=10 \
+                  --param=SKIP_TLS_VERIFY=true \
+            | oc apply -f -
             fi
             
             sleep 5
@@ -387,21 +391,23 @@ objects:
             GOGS_USER=gogs
             GOGS_PWD=gogs
 
-            oc rollout status dc gogs
-
-            _RETURN=$(curl -o /tmp/curl.log -sL --post302 -w "%{http_code}" http://$GOGS_SVC:3000/user/sign_up \
+            echo -n "Waiting for gogs to come up..."
+            while true; do
+              _RETURN=$(curl -o /tmp/curl.log -sL --post302 -w "%{http_code}" http://$GOGS_SVC:3000/user/sign_up \
               --form user_name=$GOGS_USER \
               --form password=$GOGS_PWD \
               --form retype=$GOGS_PWD \
               --form email=admin@gogs.com)
-
-            sleep 5
-
-            if [ $_RETURN != "200" ] && [ $_RETURN != "302" ] ; then
-              echo "ERROR: Failed to create Gogs admin"
-              cat /tmp/curl.log
-              exit 255
-            fi
+              if [ "$_RETURN" = "200" ] || [ "$_RETURN" = "302" ]; then
+                echo "done"
+                break
+              fi
+              if [ "$_RETURN" = "503" ]; then
+                oc delete $(oc get po -o name | grep gogs | grep -v gogs-postgresql)
+              fi
+              echo -n "."
+              sleep 5
+            done
 
             sleep 10
 
