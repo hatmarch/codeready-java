@@ -179,6 +179,11 @@ function deploy() {
   local template=$SCRIPT_DIR/../cicd-template.yaml
   echo "Using template $template"
   oc $ARG_OC_OPS new-app -f $template -p DEV_PROJECT=dev-$PRJ_SUFFIX -p STAGE_PROJECT=stage-$PRJ_SUFFIX -p DEPLOY_CHE=$ARG_DEPLOY_CHE -p EPHEMERAL=$ARG_EPHEMERAL -p ENABLE_QUAY=$ARG_ENABLE_QUAY -p QUAY_USERNAME=$ARG_QUAY_USER -p QUAY_PASSWORD=$ARG_QUAY_PASS -n cicd-$PRJ_SUFFIX 
+
+  # hack to attempt to set environment for tasks as config map in template doesn't appear to work
+  sleep 5
+  # enable java debugging
+  oc $ARG_OC_OPS set env dc/tasks -n dev-$PRJ_SUFFIX -e"JAVA_OPTS=-Xdebug -Xrunjdwp:transport=dt_socket,address=5000,server=y,suspend=n"
 }
 
 function make_idle() {
