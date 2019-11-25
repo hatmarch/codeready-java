@@ -227,7 +227,7 @@ WARNING: You need to ensure the DeploymentConfig for the Tasks pod has JAVA_OPTS
 
 2. Find the IP address of the dev pod by using this command:
 ----
-oc get pod $(oc get pods -n dev-crw | grep -i running | awk '{ print $1}') -nmplate --template='{{.status.podIP}}'
+oc get pod $(oc get pods -n dev-crw | grep -i running | awk '{ print $1}') -o template --template='{{.status.podIP}}' -n dev-crw
 ----
 
 2. In the console tab of this window, look up the IP address of one of the running containers
