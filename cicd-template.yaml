@@ -342,19 +342,17 @@ objects:
             GOGS_HOSTNAME="gogs-$CICD_NAMESPACE.$HOSTNAME"
 
             if [ "${EPHEMERAL}" == "true" ] ; then
-            curl -s https://raw.githubusercontent.com/OpenShiftDemos/gogs-openshift-docker/master/openshift/gogs-template.yaml| oc process -f - \
+            curl -s https://raw.githubusercontent.com/OpenShiftDemos/gogs-openshift-docker/master/openshift/gogs-template.yaml|sed 's#sql\:9.5#sql\:9.6#g'| oc new-app -f - \
                   --param=GOGS_VERSION=0.11.34 \
                   --param=HOSTNAME=$GOGS_HOSTNAME \
-                  --param=DATABASE_VERSION=10 \
                   --param=SKIP_TLS_VERIFY=true \
-            | oc apply -f -
+                  --param=DATABASE_VERSION=latest
             else
-            curl -s https://raw.githubusercontent.com/OpenShiftDemos/gogs-openshift-docker/master/openshift/gogs-persistent-template.yaml | oc process -f - \
+            curl -s https://raw.githubusercontent.com/OpenShiftDemos/gogs-openshift-docker/master/openshift/gogs-persistent-template.yaml |sed 's#sql\:9.5#sql\:9.6#g'| oc new-app -f - \
                   --param=GOGS_VERSION=0.11.34 \
                   --param=HOSTNAME=$GOGS_HOSTNAME \
-                  --param=DATABASE_VERSION=10 \
                   --param=SKIP_TLS_VERIFY=true \
-            | oc apply -f -
+                  --param=DATABASE_VERSION=latest
             fi
             
             sleep 5

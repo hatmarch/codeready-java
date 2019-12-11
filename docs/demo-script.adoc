@@ -92,7 +92,7 @@ $DEMO_HOME/install/codeready-workspaces-operator-installer/deploy.sh --deploy -p
 ----
 NOTE: This installs an *Operator* which in turn installs all the required components for CRW.  It will take a few minutes to setup.  At this point, you could switch to a CRW you prepared earlier
 
-4. Check the progress of the operator with this command
+4. Check the progress of the operator with this command [red]#_Not available on OpenShift 3_#
 ----
 watch 'oc get csv -ocustom-columns-file=$DEMO_HOME/install/csv-columns.txt -n demo-workspaces'
 ----
@@ -111,13 +111,34 @@ oc get pods -n demo-workspaces -w
 $DEMO_HOME/scripts/provision.sh deploy --project-suffix crw --ephemeral
 ----
 
+2. Check to see that all pods are running
+----
+NAME                        READY   STATUS    RESTARTS   AGE
+cicd-demo-installer-t6zcn   1/1     Running   0          2m
+gogs-1-h5ct5                1/1     Running   2          1m
+gogs-postgresql-1-9bcmh     1/1     Running   0          1m
+jenkins-2-m8mm8             1/1     Running   0          2m
+nexus-1-deploy              1/1     Running   0          1m
+nexus-1-gg88g               1/1     Running   0          1m
+sonardb-1-5fvpj             1/1     Running   0          1m
+sonarqube-1-dfcv8           1/1     Running   0          1m
+----
+
+[NOTE]
+.What to do if pods are missing...
+====
+If some pods are missing or in an error state, the deployment failed for some reason (usually due to timeouts pulling the DB images for gogs and sonarqube).  Run the following command to delete resources and then go back to the start of <<Installing "Tasks" Demo Application,this section>> and try again.
+----
+$DEMO_HOME/scripts/provision.sh delete --project-suffix crw --ephemeral
+----
+====
 === Create a Workspace Instance for Tasks
 
 NOTE: You must have finished installing CodeReady workspaces on the cluster as per <<Installing CodeReady Workspace,here>>
 
 1. Navigate to the demo-workspaces project.  Then click on network routes.  Click on the exposed route for the CRW.  Alternatively, run this command to get the route and paste it into your browser:
 ----
-oc get route -n demo-workspaces
+oc get route codeready -n demo-workspaces --no-headers | awk '{print $2}'
 ----
 
 2. You will be prompted to log in.  Instead, hit the registration button.
