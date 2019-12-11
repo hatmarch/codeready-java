@@ -52,7 +52,31 @@ In this demo, you will see
 * Post Mortem: Look at the results of the static analysis in the CI/CD that might have found the bug
 * Promote to staging
 
-== Installing CodeReady Workspace
+== Setup
+
+1. Open a shell and enter the following to get the demo
+----
+git clone -b ocp-3.11 https://github.com/hatmarch/codeready-java.git
+cd codeready-java
+export DEMO_HOME=$(pwd)
+----
+
+There is a .devcontainer with all the necessary tools setup on it if you'd prefer to run that.  If so, do this:
+
+----
+cd $DEMO_HOME
+code .
+----
+
+Then, open Code in container.  Once the folder has been mounted in a container, then open a bash terminal and run the following:
+
+----
+export DEMO_HOME=$(pwd)
+----
+
+[blue]#Finally: Don't forget to log into the proper openshift cluster in whichever terminal you choose#
+
+=== Installing CodeReady Workspace
 
 WARNING: You can only install a very specific version of the CodeReady Workspace on OpenShift Dedicated (or ARO).  We link to that below.
 
@@ -62,31 +86,44 @@ WARNING: You can only install a very specific version of the CodeReady Workspace
 2. _Optional:_ Change storage to be per-workspace
 3. Go to the download directory with a shell that is logged into your cluster
 ----
-./deploy.sh --deploy -p=demo-workspaces \
+$DEMO_HOME/install/codeready-workspaces-operator-installer/deploy.sh --deploy -p=demo-workspaces \
     --operator-image=registry.redhat.io/codeready-workspaces/server-operator:1.0 \
     --server-image=registry.redhat.io/codeready-workspaces/server-rhel8:1.2
 ----
 NOTE: This installs an *Operator* which in turn installs all the required components for CRW.  It will take a few minutes to setup.  At this point, you could switch to a CRW you prepared earlier
 
-1. Whilst you're waiting for the workspace to be installed, open a shell and enter the following to deploy the "Tasks" demo app and it's attendant cicd, dev, and staging environment projects.
+4. Check the progress of the operator with this command
 ----
-git clone -b ocp-3.11 https://github.com/hatmarch/codeready-java.git
-cd codeready-java
-export DEMO_HOME=$(pwd)
-$DEMO_HOME/scripts/provision.sh deploy --project-suffix crw --ephemeral
+watch 'oc get csv -ocustom-columns-file=$DEMO_HOME/install/csv-columns.txt -n demo-workspaces'
 ----
 
 4. Check to see if the workspace is done with the following command
 ----
-oc get pods -n demo-workspace -w
+oc get pods -n demo-workspaces -w
 ----
 
-5. Once all the pods are running you can find the link to the workspaces project under the network routes
-Open the overview for the demo-workspaces project.  Click on the exposed route for the CRW
-5. You will be prompted to log in.  Instead, hit the registration button.
-6. Create a new JBoss workspace and wait for that to complete
+5. Once all the pods are running you are ready to proceed
 
-== Setup a workspace for Tasks
+=== Installing "Tasks" Demo Application
+
+1. Whilst you're waiting for the workspace to be installed, open a shell and enter the following to deploy the "Tasks" demo app and it's attendant cicd, dev, and staging environment projects.
+----
+$DEMO_HOME/scripts/provision.sh deploy --project-suffix crw --ephemeral
+----
+
+=== Create a Workspace Instance for Tasks
+
+NOTE: You must have finished installing CodeReady workspaces on the cluster as per <<Installing CodeReady Workspace,here>>
+
+1. Navigate to the demo-workspaces project.  Then click on network routes.  Click on the exposed route for the CRW.  Alternatively, run this command to get the route and paste it into your browser:
+----
+oc get route -n demo-workspaces
+----
+
+2. You will be prompted to log in.  Instead, hit the registration button.
+3. Create a new JBoss workspace and wait for that to complete
+
+== Import Tasks Code into Workspace
 
 1. Once the workspace is loaded, we're going to need to import a project, from our self-hosted git repo
 2. Get the route to the gogs repo
