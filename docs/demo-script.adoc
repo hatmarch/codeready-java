@@ -143,6 +143,17 @@ oc get route codeready -n demo-workspaces --no-headers | awk '{print $2}'
 
 2. You will be prompted to log in.  Instead, hit the registration button.
 3. Create a new JBoss workspace and wait for that to complete
+[red]#** Workspaces can take a long time to load for the first time, perhaps as much as 10 minutes or more#
+
+[NOTE]
+.Sometimes workspaces fail to load
+====
+* Many times workspaces will fail to startup due to timeout issues around persistent volumes.  Generally the way around this is to just try again.  You can diagnose by watching the events of the pods that are created in the demo-workspaces environment.
+
+* If the JBoss workspace fails to load, try the java only workspace
+
+* If the loading screen gets stuck, but there is a green dot next to the workspace, then click away from the workspace and back onto it to restart client load
+====
 
 == Import Tasks Code into Workspace
 
